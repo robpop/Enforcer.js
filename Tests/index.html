@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+
+	<title>Enforcer.js tests</title>
+	<meta name="description" content="Enforcer.js tests">
+	<meta name="author" content="Robert F. Popeleski">
+
+</head>
+
+<body>
+
+	<input type="text" maxlength="10" placeholder="max length 10" id="Foo">
+
+	<script src="../enforcer.js"></script>
+
+	<script>
+
+		// watch maxlength attribute of input element with id "Foo"
+		// perform callback function when change to attribute is detected
+		// do not reinsert the input element if it's deleted from the DOM
+		// call activate() to start Enforcer on object - or omit the call to initialize and start later
+
+		let enforcer = new Enforcer("Foo.maxlength", function() {
+			alert("Input maxlength attribute was tampered");
+		}, false).activate();
+
+	</script>
+</body>
+</html>
