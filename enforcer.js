@@ -48,19 +48,54 @@ class Enforcer {
 		this.persist = persist;
 	}
 
-	static #_persist () {}
 
 	static #_onManip ( onManip, parent_ele, watch_list ) {
 
 		let i = 0;
 		let watch_list_l = watch_list.length;
-		for ( i; i < watch_list_l; ++i ) {
-			console.log( watch_list[ i ] );
+		for ( i; i < watch_list_l; i++ ) {
+			switch (watch_list[ i ]) {
+				case "maxlength":
+					let m = parent_ele.getAttribute("maxlength");
+					if(m) {
+						parent_ele.addEventListener('focusout', (e) => {
+							if(parent_ele.value.length > m) {
+								parent_ele.setAttribute("maxlength", m);
+								parent_ele.value = parent_ele.value.substring(0,m);
+								onManip();
+							}
+						});
+					}
+				break;
+			}
 		}
 
 	}
 
-	static #_watch ( watch ) {
+
+	static #_persist ( onManip, parent_ele, watch_list ) {
+
+		let backup = parent_ele.cloneNode(true);
+
+		const observer = new MutationObserver(function(mutations_list) {
+			mutations_list.forEach(function(mutation) {
+				mutation.removedNodes.forEach(function(removed_node) {
+					if(removed_node.id == parent_ele.id) {
+						console.log(backup);
+						
+						document.body.appendChild(backup);
+						Enforcer.#_onManip( onManip, backup, watch_list );
+					}
+				});
+			});
+		});
+		
+		observer.observe(document.getElementsByTagName('body')[0], { subtree: false, childList: true });
+
+	}
+
+
+	static #_watch ( watch, onManip, persist ) {
 
 		enforcer_assert ( typeof watch === "string", Enforcer.#ERR_WATCH_STR+" ("+watch+")" );
 		
@@ -68,13 +103,17 @@ class Enforcer {
 		let parent_ele = null;
 		enforcer_assert ( typeof watch_list[ 0 ] === "string" && document.getElementById( watch_list[ 0 ] ) !== null, Enforcer.#ERR_WATCH_ID+" ("+watch_list[ 0 ]+")" );
 
+		parent_ele = document.getElementById(watch_list[0]);
+		watch_list.shift();
 
-		Enforcer.#_onManip( this.onManip, parent_ele, watch_list );
+		Enforcer.#_onManip( onManip, parent_ele, watch_list );
+
+		persist ? Enforcer.#_persist( onManip, parent_ele, watch_list ) : null;
 
 	}
 
 	activate () {
-		Enforcer.#_watch( this.watch );
+		Enforcer.#_watch( this.watch, this.onManip, this.persist );
 		//Enforcer.#_persist( this.persist );
 	}
 
